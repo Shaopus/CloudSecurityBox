@@ -1,0 +1,132 @@
+#if 1
+//os_printf("get ");
+for(i=0;i<len;i++)
+	os_printf("%02x ",buf[i]);
+os_printf("\n");
+#endif	
+
+修改为    
+
+#if 0
+//os_printf("get ");
+for(i=0;i<len;i++)
+	os_printf("%02x ",buf[i]);
+os_printf("\n");
+#endif	
+
+
+rf_op中
+
+GwPrint("rf_parse %ddB\r\n",db);
+
+
+改为
+
+//GwPrint("rf_parse %ddB\r\n",db);
+
+为了不让打印读取到的ID   方便检测掉线
+
+
+
+修改:
+
+执行tri_reset();  打印下Log
+执行tri_refresh();打印下Log
+
+
+if(hb_cnt > 20 && hb_flag == 1)		//10s 秒钟之后如果还没收到心跳包的回复就重启吧
+{
+	os_printf("SYS Restarting\n\r");
+	tri_reset();
+}
+
+改为
+
+
+if(hb_cnt > 60 && hb_flag == 1)		//30s 秒钟之后如果还没收到心跳包的回复就重启吧
+{
+	os_printf("SYS Restarting\n\r");
+	tri_reset();
+}
+
+2016-3-28！！！！！！！！！！！！！！！！！！！！！！
+修复了UDP发包的问题。导致手机配置完成后无法跳转到配置界面。！！！！！
+uint8 rec_flag = 0;
+LOCAL void ICACHE_FLASH_ATTR
+user_devicefind_recv(void *arg, char *pusrdata, unsigned short length)
+{
+
+	struct espconn * ptrconn = (struct espconn *)arg;
+	set_ap_config(CONFIGED);
+	if(os_memcmp(pusrdata,"@XD_SHIP_DEVICE@",16)==0 && rec_flag == 0)
+	{
+		os_printf("Devivefind_Recv!!!\n\r");
+		rec_flag = 1;
+		ap_send_ack(&ptrespconn);
+	}
+
+}
+改为
+uint8 rec_flag = 0;
+LOCAL void ICACHE_FLASH_ATTR
+user_devicefind_recv(void *arg, char *pusrdata, unsigned short length)
+{
+	os_printf("Recv udp data: %s\n", pusrdata);
+	struct espconn *pesp_conn = arg;
+	remot_info *premot = NULL;
+	sint8 value = ESPCONN_OK;
+
+	set_ap_config(CONFIGED);
+	if(os_memcmp(pusrdata,"@XD_SHIP_DEVICE@",16)==0 && rec_flag == 0)
+	{
+		if (espconn_get_connection_info(pesp_conn,&premot,0) == ESPCONN_OK)
+		{
+			os_printf("Devivefind_Recv!!!\n\r");
+			pesp_conn->proto.tcp->remote_port = premot->remote_port;
+			pesp_conn->proto.tcp->remote_ip[0] = premot->remote_ip[0];
+			pesp_conn->proto.tcp->remote_ip[1] = premot->remote_ip[1];
+			pesp_conn->proto.tcp->remote_ip[2] = premot->remote_ip[2];
+			pesp_conn->proto.tcp->remote_ip[3] = premot->remote_ip[3];
+			rec_flag = 1;
+
+			ap_send_ack(pesp_conn);
+		}
+	}
+
+}
+
+
+2016-3-29！！！！！！！！！！！！！！！！！！！！！！
+修复客户端界面切换超时问题。！！！！！
+
+升级端口为192.168.0.80
+
+在gw_connect_cb(void *arg)
+新增发送数据成功的回调函数
+espconn_regist_sentcb(pespconn,gw_sent_cb);
+
+新增数据发送成功打印信息
+LOCAL void ICACHE_FLASH_ATTR
+gw_sent_cb(void *arg)
+{
+   //data sent successfully
+
+    os_printf("tcp sent succeed !!! \r\n");
+}
+
+
+2016-3-30！！！！！！！！！！！！！！！！！！！！！！
+
+
+升级端口改为192.168.0.41
+
+新增注册所有需发送的数据均成功写?入 write buffer 后的回调函数
+LOCAL void ICACHE_FLASH_ATTR
+gw_write_finish(void *arg)
+{
+    struct espconn *pespconn = arg;
+}
+gw_connect_cb(void *arg)中增加：
+
+espconn_set_opt(pespconn, 0x04); // enable write buffer
+espconn_regist_write_finish(pespconn, gw_write_finish); // register write finish callback

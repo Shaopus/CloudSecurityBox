@@ -1,0 +1,81 @@
+/*
+	for(i = 0 ;i < TIMER_TOTAL ;i++)
+	{
+		if((week == gwinfo->timer_inf[i].week))
+		{
+//			os_printf("week %d\n",gwinfo->timer_inf[i].week);
+			if(gwinfo->timer_inf[i].timerday_number != 0)
+			{
+				for(j =0 ;j < gwinfo->timer_inf[i].timerday_number; j++)
+				{
+					if((hour == gwinfo->timer_inf[i].timerdata_inf[j].hour)&&(min == gwinfo->timer_inf[i].timerdata_inf[j].min))
+					{
+						//gw_changemode(gwinfo->timer_inf[i].timerdata_inf[j].mode);
+						uint8 mode = gwinfo->timer_inf[i].timerdata_inf[j].mode ;
+						os_printf("arm 0x%x\n",mode);
+						if(mode>0 && mode<=4)
+						{
+							uint8 modechanged = 0;
+							if(mode == OUTMODE)
+							{
+								modechanged = 1;
+								deploy_led_output(1);
+								gw_changemode(OUTMODE);
+							}
+							else if(mode == INHOMEMODE)
+							{
+								modechanged = 1;
+								deploy_led_output(1);
+								gw_changemode(INHOMEMODE);
+
+							}
+							else if(mode == NIGHTMODE)
+							{
+								modechanged = 1;
+								deploy_led_output(1);
+								gw_changemode(NIGHTMODE);
+
+							}
+							else if(mode == CANCELMODE)
+							{
+								gw_changemode(CANCELMODE);
+								yy_bf(SYS_UNDEPLOY);
+								deploy_led_output(0);
+							}
+							if(modechanged == 1)
+							{
+								modechanged = 0;
+
+								if(jc_cc()!=0)
+								{
+									uint8 buf[2];
+									buf[1] = NOT_CLOSED_WINDOW;
+									if(gwinfo->ucCurSceneMode == OUTMODE)
+										buf[0] = OUT_MODE_START_ONE_MIN;
+									else if(gwinfo->ucCurSceneMode == INHOMEMODE)
+										buf[0] = INHOME_MODE;
+									else if(gwinfo->ucCurSceneMode == NIGHTMODE)
+										buf[0] = NIGHT_MODE;
+									yy_start(2,buf);
+
+								}
+								else
+								{
+									if(gwinfo->ucCurSceneMode == OUTMODE)
+										yy_bf(OUT_MODE_START_ONE_MIN);
+									else if(gwinfo->ucCurSceneMode == INHOMEMODE)
+										yy_bf(INHOME_MODE);
+									else if(gwinfo->ucCurSceneMode == NIGHTMODE)
+										yy_bf(NIGHT_MODE);
+								}
+
+							}
+						}
+						os_printf("Timer Change Mode!\n\r");
+						tri_refresh();
+					}
+				}
+			}
+		}
+	}
+ */
